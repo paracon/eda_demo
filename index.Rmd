@@ -1,0 +1,168 @@
+---
+title: "eda_demo"
+author: "Jordi E"
+date: "27 de septiembre de 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+EXPLORATORY DATA ANALYSIS
+-------------------------
+
+
+```{r}
+
+
+if(!dir.exists("data")){
+  dir.create("data")
+}
+
+```
+
+
+```{r}
+download.file("https://raw.githubusercontent.com/rstats-tartu/datasets/master/cancer_newcases_PK10.json", "data/incidence.json")
+
+```
+
+
+```{r}
+
+install.packages("devtools")
+devtools::install_github("tpall/boulder")
+
+library(boulder)
+
+incidence <- json_to_df("data/incidence.json")
+
+incidence
+
+```
+
+```{r}
+
+library(tidyverse)
+library(stringi)
+library(stringr)
+
+```
+
+
+
+```{r}
+
+#Reduim els valors més llargs de 30 caràcters:
+
+filter(incidence, str_length(`Specified site`)<30) # A base R hi ha la funció nchar
+
+```
+
+```{r}
+
+# Convert year to numeric
+
+# No podem passar directament de factor a numeric amb as.numeric perque convertiria, per exemple, any "2000" en "1"
+# Hem de convertir primer a caràcter
+
+
+incidence <- mutate_at(incidence, "Year", parse_number)
+
+# incidence <- mutate_at(incidence, "Year", as.numeric(as.caracter(x))) # With Base R
+
+incidence
+
+```
+
+```{r}
+
+# Convert "Specified site" and "Sex" to characters:
+
+incidence <- mutate_at(incidence, c("Specified site", "Sex"), parse_character)
+
+incidence
+
+```
+
+```{r}
+
+# Eliminarem tres columnes que són constants i les convertim en "etiquetes":
+
+label <- unique(incidence$label)
+
+label
+
+```
+
+```{r}
+
+data_source <- unique(incidence$source)
+
+data_source
+
+```
+
+```{r}
+
+updated <- unique(incidence$updated)
+
+updated
+
+```
+
+```{r}
+
+# Eliminarem els ".." que hi ha al principi d'alguns valors (degut a que es una taula aniuada)
+
+incidence <- mutate(incidence, Site = stri_trim_left(`Specified site`, "[[:alpha:]]")) #tallarà tot fins que trobi una lletra
+
+incidence
+
+```
+
+```{r}
+
+incidence <- incidence %>% select(Year, Site, Sex, everything(), -`Specified site`, -label, -source, -updated)
+
+incidence
+
+```
+
+```{r}
+
+# Hem de convertir el dataframe de Wide format a Long format:
+
+# To work effectively in tidyverse, we need to convert "wide format" into "long format":
+
+#Convertirem les edats un factor
+
+incidence_long <- gather(incidence, key = age, value = cases, matches("[[:digit:]]")) # Selecciona les columnes que tenen per nom un número
+
+incidence_long
+
+
+```
+
+```{r}
+
+incidence_long <- drop_na(incidence_long)
+
+incidence_long
+
+```
+
+
+We have now finished with DATA WRANGLING
+
+Now we will look at the cancer trend in Estonia
+
+```{r}
+
+
+
+
+```
+
